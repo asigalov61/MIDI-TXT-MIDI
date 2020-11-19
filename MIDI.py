@@ -1473,7 +1473,7 @@ The options:
 '''
         elif first_byte > 0xF0:  # Some unknown F-series event
             # Here we only produce a one-byte piece of raw data.
-            E = ['raw_data', time, bytest(trackdata[0])]   # 6.4
+            E = ['raw_data', time, bytes(trackdata[0])]   # 6.4
             trackdata = trackdata[1:]
         else:  # Fallthru.
             _warn("Aborting track.  Command-byte first_byte="+hex(first_byte))
