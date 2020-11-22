@@ -119,10 +119,11 @@ event, with a duration:
 
 '''
 
-import sys, struct, os, copy
+import sys, struct, copy
 # sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-Version = '6.6'
-VersionDate = '20160702'
+Version = '6.7'
+VersionDate = '20201120'
+# 20201120 6.7 call to bytest() removed, and protect _unshift_ber_int
 # 20160702 6.6 to_millisecs() now handles set_tempo across multiple Tracks
 # 20150921 6.5 segment restores controllers as well as patch and tempo
 # 20150914 6.4 text data is bytes or bytearray, not ISO-8859-1 strings
@@ -1150,6 +1151,9 @@ def _unshift_ber_int(ba):
     r'''Given a bytearray, returns a tuple of (the ber-integer at the
 start, and the remainder of the bytearray).
 '''
+    if not len(ba):   # 6.7
+        _warn('_unshift_ber_int: no integer found')
+        return ((0, b""))
     byte = ba.pop(0)
     integer = 0
     while True:
@@ -1168,10 +1172,14 @@ def _clean_up_warnings():  # 5.4
     # by the function, or by any private functions it might have called.
     global _previous_times
     global _previous_warning
+    sys.stderr.write("previous message repeated testing times\n")
     if _previous_times > 1:
-        print('  previous message repeated '+str(_previous_times)+' times', file=sys.stderr)
+        # E:1176, 0: invalid syntax (<string>, line 1176) (syntax-error) ???
+        # print('  previous message repeated '+str(_previous_times)+' times', file=sys.stderr)
+        # 6.7
+        sys.stderr.write('  previous message repeated {0} times\n'.format(_previous_times))
     elif _previous_times > 0:
-        print('  previous message repeated', file=sys.stderr)
+        sys.stderr.write('  previous message repeated\n')
     _previous_times = 0
     _previous_warning = ''
 
@@ -1182,7 +1190,7 @@ def _warn(s=''):
         _previous_times = _previous_times + 1
     else:
         _clean_up_warnings()
-        print(str(s), file=sys.stderr)
+        sys.stderr.write(str(s)+"\n")
         _previous_warning = s
 
 def _some_text_event(which_kind=0x01, text=b'some_text'):
@@ -1473,7 +1481,8 @@ The options:
 '''
         elif first_byte > 0xF0:  # Some unknown F-series event
             # Here we only produce a one-byte piece of raw data.
-            E = ['raw_data', time, bytes(trackdata[0])]   # 6.4
+            # E = ['raw_data', time, bytest(trackdata[0])]   # 6.4
+            E = ['raw_data', time, trackdata[0]]   # 6.4 6.7
             trackdata = trackdata[1:]
         else:  # Fallthru.
             _warn("Aborting track.  Command-byte first_byte="+hex(first_byte))
