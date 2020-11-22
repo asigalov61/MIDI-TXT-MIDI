@@ -1172,7 +1172,6 @@ def _clean_up_warnings():  # 5.4
     # by the function, or by any private functions it might have called.
     global _previous_times
     global _previous_warning
-    sys.stderr.write("previous message repeated testing times\n")
     if _previous_times > 1:
         # E:1176, 0: invalid syntax (<string>, line 1176) (syntax-error) ???
         # print('  previous message repeated '+str(_previous_times)+' times', file=sys.stderr)
